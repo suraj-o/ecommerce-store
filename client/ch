@@ -1,0 +1,132 @@
+// src/SearchPage.js
+
+import Dropdown from '@/components/helpers/Dropdown';
+import { Button } from '@/components/ui/button';
+import { useGetProductCategoryQuery, useGetProductSearchQuery } from '@/redux/api/products';
+import { useEffect, useState } from 'react';
+import { FaFilter, FaSearch } from 'react-icons/fa';
+
+// Example data for demonstration purposes
+const products = [
+  { id: 1, name: 'Product 1', price: 29.99, image: 'https://via.placeholder.com/150' },
+  { id: 2, name: 'Product 2', price: 49.99, image: 'https://via.placeholder.com/150' },
+  { id: 3, name: 'Product 3', price: 99.99, image: 'https://via.placeholder.com/150' },
+  { id: 4, name: 'Product 4', price: 19.99, image: 'https://via.placeholder.com/150' },
+  // Add more products as needed
+];
+
+const SearchPage = () => {
+  const [search, setSearch] = useState<string>('');
+  const [sort, setSort] = useState<string>('price-asc');
+  const [categories, setCategories] = useState<string>('Category');
+  const [pages,setpages]=useState<Array<any>>([]) 
+
+  const {data,error}= useGetProductCategoryQuery(null)
+  const {data:data2,error:error2}= useGetProductSearchQuery({search,sort,category:categories})
+
+  useEffect(()=>{
+    setpages(prev=>new Array(data2!.totalPages))
+
+    return ()=>{
+      setpages(prev=>[])
+    }
+  })
+
+
+
+
+    const sortValues=[
+      {
+        title:"price-asc",
+        setvalue:setSort
+      },
+      {
+        title:"price-dsc",
+        setvalue:setSort
+      }
+    ]
+
+    const categoriesValue= data?.categories.map((value)=>({
+      title:value,
+      setvalue:setCategories
+    }))
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      {/* Search and Filter Section */}
+      <div className="mb-8 flex flex-col md:flex-row justify-between items-center">
+        {/* Search Input */}
+        <div className="flex-1 flex items-center bg-white border border-gray-300 rounded-md px-3 py-2">
+          <FaSearch className="text-gray-500 mr-2" />
+          <input
+            type="text"
+            placeholder="Search products..."
+            className="w-full bg-transparent border-none focus:outline-none"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+
+        {/* Filter Dropdown */}
+        <div className="mt-4 md:mt-0 md:ml-4">
+        <Dropdown title='Choose Category' menu={categoriesValue!}>
+          <Button variant={"ghost"} className="flex items-center bg-gray-200 p-2 border border-gray-300 rounded-md">
+            <FaFilter className="text-gray-500 mr-2" />
+            <span>{categories}</span>
+          </Button>
+          </Dropdown>
+        </div>
+
+
+        {/* Sort Dropdown */}
+        <div className='ml-2'>
+        <Dropdown title='Choose Price Order' menu={sortValues}>
+             <Button variant={"ghost"} className=' bg-gray-200 p-2 border border-gray-300 rounded-md'>
+                 {sort}
+            </Button>
+        </Dropdown>
+        </div>
+
+      </div>
+
+      {/* Product Grid */}
+      <div className="min-h-[70vh] grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {
+        0 < data2!.filteredProduct.length >  ? (
+          data2!.filteredProduct.map(product => (
+            <>
+            <div key={product._id} className="bg-white p-4 rounded-lg shadow-md ">
+              <img
+                src={product.photo}
+                alt={product.name}
+                className="w-full h-48 object-cover rounded-md mb-4"
+              />
+              <h3 className="text-lg font-semibold mb-2">{product.name}</h3>
+              <p className="text-gray-700 mb-4">₹{product.price.toFixed(2)}</p>
+              <a
+                href="#"
+                className="bg-blue-600 text-white py-2 px-4 rounded-lg text-center inline-block"
+              >
+                Add to Cart
+              </a>
+            </div>
+            <div className='flex justify-center items-center p-4'>
+              {
+                pages.map((_,idx)=>(
+                  <Button key={idx} className=' bg-blue-700 rounded-md border-blue-800 p-2'>
+                    {idx + 1}
+                  </Button>
+                ))
+              }
+            </div>
+            </>
+          ))
+        ) : (
+          <p className="text-center text-gray-500 text-3xl font-bold capitalize">No products found</p>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default SearchPage;
